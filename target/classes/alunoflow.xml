@@ -13,8 +13,9 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
     <db:mysql-config name="MySQL_Configuration" host="192.168.99.101" port="3306" user="fiapusr" password="fiap2019" database="fiapdb" doc:name="MySQL Configuration"/>
     <flow name="alunoflowFlow">
         <http:listener config-ref="HTTP_Listener_Configuration" path="/aluno" allowedMethods="GET,POST" doc:name="HTTP"/>
-        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
-        <set-variable variableName="payload_var" value="#[message.payload]" doc:name="Variable"/>
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
+        <set-variable variableName="payload_var" value="#[payload]" doc:name="Variable"/>
+        <logger message="#[flowVars.payload_var]" level="INFO" doc:name="Logger"/>
         <choice doc:name="Choice">
             <when expression="#[message.inboundProperties.'http.method' == 'GET']">
                 <db:select config-ref="MySQL_Configuration" doc:name="select ALUNO">
@@ -23,7 +24,6 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
                 <json:object-to-json-transformer doc:name="Object to JSON"/>
             </when>
             <when expression="#[message.inboundProperties.'http.method' == 'POST']">
-                <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
                 <db:insert config-ref="MySQL_Configuration" doc:name="insert ALUNO">
                     <db:parameterized-query><![CDATA[INSERT INTO ALUNO VALUES 
 (
@@ -35,6 +35,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
                 </db:insert>
                 <json:object-to-json-transformer doc:name="Object to JSON"/>
                 <set-payload value="#[flowVars.payload_var]" mimeType="application/json" doc:name="Set Payload"/>
+                <json:object-to-json-transformer doc:name="Object to JSON"/>
             </when>
         </choice>
     </flow>
